@@ -165,4 +165,4 @@ input("Press Enter to stop...")
 
 ## Author
 
-Made by [Panthoiba](https://github.com/panthoiba)
+Made by [Twinkle Sonowal](https://github.com/twinklesonowal)
