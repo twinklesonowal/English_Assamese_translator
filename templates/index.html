@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>English → Assamese Translator</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --border: #e8e8e8;
+      --border-inner: #f0f0f0;
+      --text-primary: #1a1a1a;
+      --text-muted: #000000;
+      --text-placeholder: #9c9c9c;
+      --output-bg: #fafafa;
+      --btn-clear-color: #b0b0b0;
+      --history-hover: #f9f9f9;
+      --header-bg: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg: #141414;
+      --card: #1f1f1f;
+      --border: #2e2e2e;
+      --border-inner: #2a2a2a;
+      --text-primary: #f0f0f0;
+      --text-muted: #ffffff;
+      --text-placeholder: #b5b3b3;
+      --output-bg: #181818;
+      --btn-clear-color: #555;
+      --history-hover: #272727;
+      --header-bg: #1a1a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.2s;
+    }
+
+    header {
+      width: 100%;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .theme-toggle {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .theme-toggle:hover { color: var(--text-primary); }
+
+    .container {
+      width: 100%;
+      max-width: 880px;
+      padding: 28px 16px;
+    }
+
+    .translator-card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 16px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 48px 1fr;
+      min-height: 220px;
+    }
+
+    .panel { display: flex; flex-direction: column; }
+
+    .panel-header {
+      padding: 14px 18px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-inner);
+    }
+
+    textarea {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 16px 18px;
+      font-size: 16px;
+      font-family: inherit;
+      resize: none;
+      color: var(--text-primary);
+      background: transparent;
+      line-height: 1.6;
+      min-height: 160px;
+    }
+
+    textarea::placeholder { color: var(--text-placeholder); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--border-inner);
+      border-right: 1px solid var(--border-inner);
+      color: var(--text-placeholder);
+      font-size: 18px;
+    }
+
+    .output-panel { background: var(--output-bg); }
+
+    .output-text {
+      flex: 1;
+      padding: 16px 18px;
+      font-size: 17px;
+      color: var(--text-primary);
+      line-height: 1.7;
+      min-height: 160px;
+    }
+
+    .output-text.placeholder {
+      color: var(--text-placeholder);
+      font-size: 15px;
+    }
+
+    .spinner-wrap {
+      display: none;
+      padding: 20px 18px;
+      align-items: center;
+      gap: 12px;
+      min-height: 160px;
+    }
+
+    .spinner-wrap.active { display: flex; }
+
+    .spinner {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border);
+      border-top-color: #1D9E75;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .spinner-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .action-bar {
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-top: 1px solid var(--border-inner);
+      background: var(--card);
+      flex-wrap: wrap;
+    }
+
+    .btn-translate {
+      background: #1D9E75;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      font-family: inherit;
+    }
+
+    .btn-translate:hover { background: #0F6E56; }
+    .btn-translate:active { transform: scale(0.97); }
+    .btn-translate:disabled { background: #555; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-secondary:hover { color: var(--text-primary); background: var(--bg); }
+    .btn-secondary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-clear {
+      margin-left: auto;
+      background: none;
+      border: none;
+      font-size: 13px;
+      color: var(--btn-clear-color);
+      cursor: pointer;
+      font-family: inherit;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .btn-clear:hover { color: var(--text-muted); }
+
+    .status {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 0 18px 10px;
+      min-height: 22px;
+    }
+
+    .status.error { color: #E53E3E; }
+
+    .history-card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 18px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .history-card h2 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .history-item {
+      padding: 12px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.12s;
+      margin-bottom: 8px;
+      border: 1px solid var(--border-inner);
+    }
+
+    .history-item:hover { background: var(--history-hover); }
+    .history-item:last-child { margin-bottom: 0; }
+
+    .history-en { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .history-as { font-size: 15px; color: var(--text-primary); }
+
+    .empty-history {
+      font-size: 13px;
+      color: var(--text-placeholder);
+      text-align: center;
+      padding: 16px 0;
+    }
+
+    .voice-note {
+      font-size: 11px;
+      color: var(--text-placeholder);
+      padding: 0 18px 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>English → Assamese Translator</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark mode</button>
+</header>
+
+<div class="container">
+
+  <div class="translator-card">
+    <div class="panels">
+
+      <div class="panel">
+        <div class="panel-header">English</div>
+        <textarea id="inputText" placeholder="Type or paste English text here..."></textarea>
+      </div>
+
+      <div class="divider">→</div>
+
+      <div class="panel output-panel">
+        <div class="panel-header">Assamese</div>
+        <div class="spinner-wrap" id="spinnerWrap">
+          <div class="spinner"></div>
+          <span class="spinner-label">Translating...</span>
+        </div>
+        <div class="output-text placeholder" id="outputBox">Translation appears here...</div>
+      </div>
+
+    </div>
+
+    <div class="action-bar">
+      <button class="btn-translate" id="translateBtn" onclick="doTranslate()">Translate</button>
+      <button class="btn-secondary" id="speakBtn" onclick="speakAssamese()" disabled>🔊 Pronounce</button>
+      <button class="btn-secondary" onclick="copyTranslation()" id="copyBtn">Copy</button>
+      <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div class="voice-note" id="voiceNote"></div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="history-card">
+    <h2>Recent translations</h2>
+    <div id="historyList">
+      <div class="empty-history">Your translations will appear here</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const history = [];
+  let lastTranslation = "";
+  let isDark = false;
+
+  function toggleTheme() {
+    isDark = !isDark;
+    document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+    document.getElementById("themeBtn").textContent = isDark ? "☀️ Light mode" : "🌙 Dark mode";
+  }
+
+  async function doTranslate() {
+    const text = document.getElementById("inputText").value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById("translateBtn");
+    const status = document.getElementById("status");
+    const outputBox = document.getElementById("outputBox");
+    const spinnerWrap = document.getElementById("spinnerWrap");
+    const speakBtn = document.getElementById("speakBtn");
+    const voiceNote = document.getElementById("voiceNote");
+
+    btn.disabled = true;
+    btn.textContent = "Translating...";
+    status.textContent = "";
+    voiceNote.textContent = "";
+    outputBox.style.display = "none";
+    spinnerWrap.classList.add("active");
+    speakBtn.disabled = true;
+
+    try {
+      const res = await fetch("/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+
+      const data = await res.json();
+      spinnerWrap.classList.remove("active");
+      outputBox.style.display = "block";
+
+      if (data.error) {
+        status.textContent = data.error;
+        status.className = "status error";
+      } else {
+        lastTranslation = data.translation;
+        outputBox.textContent = data.translation;
+        outputBox.classList.remove("placeholder");
+        speakBtn.disabled = false;
+        addToHistory(text, data.translation);
+      }
+    } catch (e) {
+      spinnerWrap.classList.remove("active");
+      outputBox.style.display = "block";
+      status.textContent = "Could not reach the server. Is app.py running?";
+      status.className = "status error";
+    }
+
+    btn.disabled = false;
+    btn.textContent = "Translate";
+  }
+
+  function speakAssamese() {
+    if (!lastTranslation) return;
+    const voiceNote = document.getElementById("voiceNote");
+
+    speechSynthesis.cancel();
+
+    const voices = speechSynthesis.getVoices();
+    const assameseVoice = voices.find(v =>
+      v.lang.startsWith("as") || v.lang.startsWith("bn") || v.lang.startsWith("hi")
+    );
+
+    const utter = new SpeechSynthesisUtterance(lastTranslation);
+    utter.rate = 0.85;
+    utter.pitch = 1;
+
+    if (assameseVoice) {
+      utter.voice = assameseVoice;
+      utter.lang = assameseVoice.lang;
+      voiceNote.textContent = "Speaking with: " + assameseVoice.name;
+    } else {
+      utter.lang = "hi-IN";
+      voiceNote.textContent = "No Assamese voice found — using Hindi voice as fallback. Install Google Assamese TTS for best results.";
+    }
+
+    speechSynthesis.speak(utter);
+  }
+
+  function copyTranslation() {
+    if (!lastTranslation) return;
+    navigator.clipboard.writeText(lastTranslation);
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "✅ Copied!";
+    setTimeout(() => { btn.textContent = "Copy"; }, 2000);
+  }
+
+  function clearAll() {
+    document.getElementById("inputText").value = "";
+    document.getElementById("outputBox").textContent = "Translation appears here...";
+    document.getElementById("outputBox").classList.add("placeholder");
+    document.getElementById("status").textContent = "";
+    document.getElementById("voiceNote").textContent = "";
+    document.getElementById("speakBtn").disabled = true;
+    lastTranslation = "";
+  }
+
+  function addToHistory(en, as_text) {
+    history.unshift({ en, as_text });
+    if (history.length > 5) history.pop();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById("historyList");
+    if (history.length === 0) {
+      list.innerHTML = '<div class="empty-history">Your translations will appear here</div>';
+      return;
+    }
+    list.innerHTML = history.map((h, i) => `
+      <div class="history-item" onclick="loadHistory(${i})">
+        <div class="history-en">${h.en}</div>
+        <div class="history-as">${h.as_text}</div>
+      </div>
+    `).join("");
+  }
+
+  function loadHistory(i) {
+    document.getElementById("inputText").value = history[i].en;
+  }
+
+  document.getElementById("inputText").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && e.ctrlKey) doTranslate();
+  });
+
+  window.speechSynthesis.onvoiceschanged = function() {};
+</script>
+
+</body>
+</html>
